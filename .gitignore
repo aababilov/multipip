@@ -1,0 +1,12 @@
+*.pyc
+*.swp
+.venv
+.tox
+.coverage
+cover/*
+build
+dist
+*.egg
+*.egg-info
+*~
+MANIFEST

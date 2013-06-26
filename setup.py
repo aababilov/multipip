@@ -24,5 +24,5 @@ setup(
     ],
     packages=[],
     py_modules=[],
-    install_requires=read("tools/pip-requires")
+    install_requires=read("requirements.txt")
 )

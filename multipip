@@ -4,6 +4,7 @@ import argparse
 import distutils.spawn
 import logging
 import os
+import re
 import subprocess
 import sys
 
@@ -89,7 +90,7 @@ joined_requirements = []
 
 
 def install_requirement_ensure_req_field(req):
-    if not req.req:
+    if not hasattr(req, 'req') or not req.req:
         # pip 0.8 or so
         link = pip.index.Link(req.url)
         name = link.egg_fragment
@@ -137,17 +138,24 @@ def parse_requirements(options):
     :return: tuple (all, ignored) of InstallRequirement
     """
     all_requirements = {}
+    skip_match = None
+    if options.skip_requirements_regex:
+        skip_match = re.compile(options.skip_requirements_regex)
     for req_spec in options.requirement_specs:
         try:
             req = install_requirement_parse(req_spec, "command line")
+            if skip_match and skip_match.search(req.req.key):
+                continue
             all_requirements.setdefault(req.req.key, []).append(req)
         except Exception as ex:
             logger.error("Cannot parse `%s': %s" % (req_spec, ex))
             sys.exit(BAD_REQUIREMENTS)
     for filename in options.requirements:
         try:
-            for req in pip.req.parse_requirements(filename, options=options):
+            for req in pip.req.parse_requirements(filename):
                 req = install_requirement_ensure_req_field(req)
+                if skip_match and skip_match.search(req.req.key):
+                    continue
                 all_requirements.setdefault(req.req.key, []).append(req)
         except Exception as ex:
             logger.error("Cannot parse `%s': %s" % (filename, ex))
@@ -277,7 +285,7 @@ def join_requirements(options):
                     "pip freeze")
                 incompatible_requirement(frozen_req, joined_req)
                 joined_req = frozen_req
-        joined_requirements.append(joined_req.req)
+        joined_requirements.append(joined_req)
 
         segment_ok = False
         lower_version = None
@@ -315,7 +323,14 @@ def join_requirements(options):
 
 
 def print_requirements():
-    for req in sorted(joined_requirements, key=lambda x: x.key):
+    formatted_requirements = []
+    for req in joined_requirements:
+        if req.url:
+            req = "%s#egg=%s" % (req.url, req.req)
+        else:
+            req = str(req.req)
+        formatted_requirements.append(req)
+    for req in sorted(formatted_requirements):
         print req
 
 

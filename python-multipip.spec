@@ -6,7 +6,7 @@
 Summary: multipip and py2rpm
 Name: python-multipip
 Version: %{version}
-Release: %{release}
+Release: %{release}%{?dist}
 Source0: %{pkg_name}-%{unmangled_version}.tar.gz
 License: Apache License (2.0)
 Group: Development/Libraries
@@ -18,7 +18,7 @@ Url: https://github.com/aababilov/multipip
 Requires: rpm-build
 Requires: python-setuptools
 Requires: python-pip
-
+Requires: python-argparse
 
 %description
 Tools for building RPMs for Python packages.
